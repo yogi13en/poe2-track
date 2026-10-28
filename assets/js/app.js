@@ -25,12 +25,11 @@
     sortKey: "timestamp",
     sortDesc: true,
     page: 1,
-    live: true,
     user: null,
     overlay: []
   };
 
-  let all = D.records.slice();
+  let all = [];
 
   /* ── helpers ─────────────────────────────────────────────── */
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -93,12 +92,13 @@
   function renderSummary() {
     const records = leagueFiltered(all);
     const s = D.summarize(records);
+    const none = s.total === 0;
 
     animateNumber($("#total-counter"), s.total);
     $("#today-counter").textContent = D.fmt(s.today);
-    $("#per-minute").textContent = s.perMinute.toFixed(2).replace(".", ",");
+    $("#per-minute").textContent = none ? "—" : s.perMinute.toFixed(2).replace(".", ",");
     $("#avg-level").textContent = s.avgLevel ? s.avgLevel.toFixed(1).replace(".", ",") : "—";
-    $("#hc-share").textContent = s.hcShare.toFixed(1).replace(".", ",") + "%";
+    $("#hc-share").textContent = none ? "—" : s.hcShare.toFixed(1).replace(".", ",") + "%";
 
     if (s.topArea) {
       const areaMeta = D.AREAS.find((a) => a.area === s.topArea.name);
@@ -106,34 +106,55 @@
       $("#deadliest-act").textContent = areaMeta ? areaMeta.act : "—";
       $("#deadliest-count").textContent = D.fmt(s.topArea.count);
       $("#deadliest-share").textContent = ((s.topArea.count / s.total) * 100).toFixed(1).replace(".", ",") + "%";
-      const maxArea = D.countBy(records, "area")[0];
-      $("#deadliest-meter").style.width = (maxArea ? (maxArea.value / s.total) * 100 : 0) + "%";
+      $("#deadliest-meter").style.width = (s.topArea.count / s.total) * 100 + "%";
+    } else {
+      $("#deadliest-area").textContent = "—";
+      $("#deadliest-act").textContent = "—";
+      $("#deadliest-count").textContent = "0";
+      $("#deadliest-share").textContent = "—";
+      $("#deadliest-meter").style.width = "0%";
     }
 
     if (s.topCause) {
       $("#top-cause").textContent = s.topCause.label;
       $("#top-cause-count").textContent = D.fmt(s.topCause.count);
+    } else {
+      $("#top-cause").textContent = "—";
+      $("#top-cause-count").textContent = "0";
     }
 
     if (s.topClass) {
       $("#top-class").textContent = s.topClass.name;
       $("#top-class-count").textContent = D.fmt(s.topClass.count);
+    } else {
+      $("#top-class").textContent = "—";
+      $("#top-class-count").textContent = "0";
     }
 
     if (s.maxLevel) {
       $("#max-level-name").textContent = s.maxLevel.charName;
       $("#max-level-value").textContent = s.maxLevel.level;
       $("#max-level-place").textContent = s.maxLevel.area;
+    } else {
+      $("#max-level-name").textContent = "—";
+      $("#max-level-value").textContent = "0";
+      $("#max-level-place").textContent = "—";
     }
 
     $("#last-hour").textContent = D.fmt(s.lastHour);
-    $("#hour-avg").textContent = Math.round(s.avgPerHour).toLocaleString("ru-RU");
+    $("#hour-avg").textContent = D.fmt(s.avgPerHour);
 
     renderTicker(records.slice(0, 12));
   }
 
   function renderTicker(records) {
     const track = $("#ticker-track");
+    if (!records.length) {
+      track.classList.add("is-empty");
+      track.innerHTML = '<span class="ticker__empty">Реестр пуст — первая запись появится здесь</span>';
+      return;
+    }
+    track.classList.remove("is-empty");
     const items = records.map((r) =>
       `<span class="ticker__item"><b>${esc(r.charName)}</b>` +
       `<span class="t-sep">·</span>ур. ${r.level}` +
@@ -145,8 +166,24 @@
   }
 
   /* ── графики ─────────────────────────────────────────────── */
+  function chartEmpty(container, text) {
+    container.innerHTML = '<p class="chart-empty">' + esc(text) + "</p>";
+  }
+
   function renderCharts() {
     const base = rangeFiltered(leagueFiltered(all));
+
+    if (!base.length) {
+      const text = all.length
+        ? "Нет записей за выбранный период"
+        : "Данных пока нет — добавьте первую запись";
+      chartEmpty($("#chart-areas"), text);
+      chartEmpty($("#chart-causes"), text);
+      chartEmpty($("#chart-classes"), text);
+      chartEmpty($("#chart-hours"), text);
+      $("#legend-causes").innerHTML = "";
+      return;
+    }
 
     const areas = D.countBy(base, "area").slice(0, 10).map((row) => {
       const meta = D.AREAS.find((a) => a.area === row.key);
@@ -198,9 +235,16 @@
     }).join("");
 
     $("#ledger-empty").hidden = rows.length > 0;
+    if (!rows.length) {
+      const noneAtAll = all.length === 0;
+      $("p", $("#ledger-empty")).textContent = noneAtAll
+        ? "Реестр пуст. Первая запись — ваша."
+        : "Ни одна душа не подходит под эти условия.";
+      $("#empty-reset").textContent = noneAtAll ? "Добавить запись" : "Сбросить фильтры";
+    }
     $("#ledger-count").innerHTML = list.length
       ? `Показано <b>${startIdx + 1}–${startIdx + rows.length}</b> из <b>${D.fmt(list.length)}</b> записей`
-      : "Записей не найдено";
+      : all.length === 0 ? "Реестр пока пуст" : "Записей не найдено";
 
     renderPager(pages);
 
@@ -509,58 +553,6 @@
     }
   }
 
-  /* ── живые записи ────────────────────────────────────────── */
-  function randomRecord() {
-    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-    const klass = pick(D.CLASSES);
-    const cause = pick(D.CAUSES);
-    const area = pick(D.AREAS);
-    const boss = (D.BOSS_BY_AREA[area.area] || [])[0];
-    const source = cause.key === "boss" && boss ? boss : pick([
-      "Rare Pack", "Vaal Spawn", "Bog Crawler", "Twisted Remnant", "Rare Monster"
-    ]);
-    return {
-      id: "live" + Date.now().toString(36),
-      charName: pick(["Kelari", "Draven", "Ysla", "Vornt", "Mirelle", "Thane", "Ashka", "Bram"]) + "_" + pick(["Ash", "Vow", "Bane", "Pyre", "Dirge"]),
-      className: klass.key,
-      classColor: klass.color,
-      ascendancy: klass.ascendancies[0],
-      level: 20 + Math.floor(Math.random() * 78),
-      area: area.area,
-      act: area.act,
-      causeKey: cause.key,
-      cause: cause.label,
-      causeColor: cause.color,
-      source,
-      damage: "—",
-      league: pick(D.LEAGUES),
-      hardcore: Math.random() < 0.3,
-      timestamp: Date.now(),
-      community: false,
-      note: "Смерть зафиксирована в live-потоке."
-    };
-  }
-
-  let liveTimer = null;
-
-  function startLive() {
-    stopLive();
-    liveTimer = setInterval(() => {
-      const rec = randomRecord();
-      all.unshift(rec);
-      renderSummary();
-      if (state.page === 1) renderLedger();
-      $("#updated-at").textContent = "только что";
-    }, 9000);
-    $("#live-toggle").setAttribute("aria-pressed", "true");
-  }
-
-  function stopLive() {
-    if (liveTimer) clearInterval(liveTimer);
-    liveTimer = null;
-    $("#live-toggle").setAttribute("aria-pressed", "false");
-  }
-
   /* ── тосты ───────────────────────────────────────────────── */
   function toast(message, kind) {
     const box = document.createElement("div");
@@ -625,7 +617,13 @@
       renderLedger();
     };
     $("#reset-filters").addEventListener("click", reset);
-    $("#empty-reset").addEventListener("click", reset);
+    $("#empty-reset").addEventListener("click", () => {
+      if (!all.length) {
+        $("#report").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      reset();
+    });
 
     $$(".th-sort").forEach((th) => {
       th.addEventListener("click", () => {
@@ -635,12 +633,6 @@
         state.page = 1;
         renderLedger();
       });
-    });
-
-    $("#live-toggle").addEventListener("click", () => {
-      state.live = !state.live;
-      if (state.live) { startLive(); toast("Live-поток включён."); }
-      else { stopLive(); toast("Live-поток приостановлен."); }
     });
 
     $("#form-act").addEventListener("change", refreshAreaSelect);
@@ -686,7 +678,12 @@
     renderSummary();
     renderCharts();
     renderLedger();
-    $("#updated-at").textContent = "только что";
+    syncUpdatedAt();
+  }
+
+  /* «обновлено» считается по самой свежей записи, без имитации активности */
+  function syncUpdatedAt() {
+    $("#updated-at").textContent = all.length ? D.timeAgo(all[0].timestamp) : "—";
   }
 
   /* ── запуск ──────────────────────────────────────────────── */
@@ -703,26 +700,16 @@
     try {
       const community = await S.communityDeaths();
       if (community.length) {
-        all = community.map(normalizeCommunity).concat(all)
-          .sort((a, b) => b.timestamp - a.timestamp);
+        all = community.map(normalizeCommunity).sort((a, b) => b.timestamp - a.timestamp);
       }
     } catch (e) {
       console.warn("Не удалось загрузить записи сообщества", e);
     }
 
     renderAll();
-    startLive();
 
-    setInterval(() => {
-      $("#updated-at").textContent = "только что";
-    }, 30000);
-
-    // лёгкая «жизнь» цифр в шапке
-    setInterval(() => {
-      const el = $("#per-minute");
-      const value = Number(el.textContent.replace(",", ".")) || 0;
-      el.textContent = Math.max(0.1, value + (Math.random() - 0.5) * 0.12).toFixed(2).replace(".", ",");
-    }, 4000);
+    // раз в минуту освежаем относительное время («5 мин назад»)
+    setInterval(syncUpdatedAt, 60000);
   }
 
   function normalizeCommunity(r) {

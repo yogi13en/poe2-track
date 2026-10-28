@@ -19,7 +19,7 @@
 <!-- ══════════════════ TOP BAR ══════════════════ -->
 <header class="topbar">
   <div class="topbar__inner">
-    <a class="brand" href="#top" aria-label="Хроники Падших — на главную">
+    <a class="brand" href="#top" aria-label="Хроники Падших, Path of Exile II · Mortality Index — на главную">
       <svg class="brand__sigil" viewBox="0 0 48 48" aria-hidden="true">
         <path d="M24 3.5 42 14v20L24 44.5 6 34V14z" class="sigil-hex"></path>
         <path d="M24 9.5 36.5 17v14L24 38.5 11.5 31V17z" class="sigil-hex2"></path>
@@ -41,9 +41,6 @@
     </nav>
 
     <div class="topbar__actions">
-      <button class="live-pill" id="live-toggle" type="button" aria-pressed="true" title="Поток обновляется в реальном времени">
-        <span class="live-dot"></span><span class="live-label">LIVE</span>
-      </button>
       <div class="auth-slot" id="auth-slot">
         <button class="btn btn--ghost" type="button" data-open-auth="login">Войти</button>
         <button class="btn btn--gold" type="button" data-open-auth="register">Регистрация</button>
@@ -68,8 +65,9 @@
         <span class="hero__title-main">Смертей<s class="hero__death-mark" aria-hidden="true">†</s></span>
       </h1>
       <p class="hero__lead">
-        Каждая смерть в Рэкласте оставляет след. Мы собираем причины, локации и уровни павших
-        персонажей со всего мира — чтобы вы знали, где вас ждёт погибель.
+        Реестр смертей, который наполняет само сообщество: место, причина, источник урона,
+        уровень и лига каждого павшего персонажа. Пока записей немного — и каждая
+        становится частью общей картины.
       </p>
 
       <div class="hero__league" role="tablist" aria-label="Лига">
@@ -103,7 +101,7 @@
       </div>
 
       <div class="ticker" aria-label="Последние смерти">
-        <span class="ticker__badge"><span class="live-dot"></span>Сейчас</span>
+        <span class="ticker__badge"><span class="live-dot"></span>Последние</span>
         <div class="ticker__viewport">
           <div class="ticker__track" id="ticker-track"></div>
         </div>
@@ -118,7 +116,7 @@
         <p class="section__eyebrow">Сводка</p>
         <h2 class="section__title">Дыхание смерти</h2>
       </div>
-      <p class="section__hint">Данные обновляются каждые несколько секунд · <span id="updated-at">только что</span></p>
+      <p class="section__hint">Обновляется с каждой новой записью · <span id="updated-at">—</span></p>
     </div>
 
     <div class="cards" id="summary-cards">
@@ -284,7 +282,7 @@
         <p class="section__eyebrow">Личный вклад</p>
         <h2 class="section__title">Впишите своё имя<br><em>в книгу падших</em></h2>
         <p class="report-intro__text">
-          Потеряли персонажа? Добавьте запись — и она появится в глобальном реестре.
+          Потеряли персонажа? Добавьте запись — и она сразу появится в реестре.
           Укажите место, причину и уровень: чем честнее данные, тем точнее статистика для всего сообщества.
         </p>
         <ul class="report-list">
@@ -371,7 +369,7 @@
     <div class="about-grid">
       <article class="about-card">
         <h3>Откуда данные</h3>
-        <p>Добровольные отчёты игроков и публичные записи сообщества. В демо-версии витрина наполнена сгенерированной выборкой; реальные записи помечаются как «сообщество». Проект неофициальный и не связан с GGG.</p>
+        <p>Только добровольные отчёты игроков: каждая строка реестра — реальная смерть, добавленная через форму. Сгенерированных записей здесь нет: пока отчётов мало, графики честно показывают пустоту. Проект неофициальный и не связан с GGG.</p>
       </article>
       <article class="about-card">
         <h3>Как считается</h3>

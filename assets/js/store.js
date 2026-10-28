@@ -2,7 +2,7 @@
    store.js — аккаунты, сессия и запись смертей.
 
    Работает в двух режимах:
-   · local  — данные в localStorage браузера (демо, по умолчанию);
+   · local  — данные в localStorage браузера (по умолчанию);
    · api    — реальный сервер (server.py): задайте
               window.POE2_CONFIG = { apiBase: "https://ваш-сервер/api" }
               в assets/js/config.js ПЕРЕД подключением этого файла.
@@ -65,7 +65,7 @@
       return "pbkdf2$120000$" + b64(bits);
     }
 
-    // Запасной вариант для file:// (не secure context). Слабее, но не ломает демо.
+    // Запасной вариант для file:// (не secure context). Слабее, но работает без HTTPS.
     let h1 = 0x811c9dc5;
     let h2 = 0x1000193;
     const data = enc.encode(password + saltB64);

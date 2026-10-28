@@ -18,8 +18,8 @@
   --blood-bright: #d3402f;
   --text: #d9d1c3;
   --text-strong: #f0e9da;
-  --muted: #8a8175;
-  --muted-2: #7c7365;
+  --muted: #8f877a;
+  --muted-2: #8a8172;
   --green: #6f9a72;
   --radius: 2px;
   --shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.9);
@@ -179,24 +179,6 @@ code {
 .nav a:hover::after { width: 100%; left: 0; }
 
 .topbar__actions { display: flex; align-items: center; gap: 10px; }
-
-.live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid var(--line);
-  background: rgba(160, 43, 37, 0.06);
-  color: var(--muted);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  padding: 5px 10px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all 0.25s;
-}
-.live-pill:hover { border-color: rgba(201, 167, 97, 0.4); color: var(--text); }
-.live-pill[aria-pressed="false"] { opacity: 0.5; }
-.live-pill[aria-pressed="false"] .live-dot { background: var(--muted-2); animation: none; }
 
 .live-dot {
   width: 6px; height: 6px;
@@ -555,6 +537,33 @@ code {
 .ticker__item b { color: var(--text); font-weight: 500; }
 .ticker__item .t-blood { color: var(--blood-bright); }
 .ticker__item .t-sep { color: var(--gold-dim); opacity: 0.5; }
+
+.ticker__track.is-empty { animation: none; }
+.ticker__empty {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted-2);
+  letter-spacing: 0.02em;
+}
+
+/* заглушка вместо графика, когда данных нет */
+.chart-empty {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  height: 100%;
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--muted-2);
+  border: 1px dashed rgba(201, 167, 97, 0.14);
+  border-radius: 2px;
+  background: radial-gradient(120% 100% at 50% 0%, rgba(201, 167, 97, 0.03), transparent 70%);
+}
 
 /* ─────────────────────────────── sections */
 

@@ -1,5 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   data.js — справочники Wraeclast и генератор глобального реестра
+   data.js — справочники Wraeclast и агрегации реестра.
+   Сгенерированных записей нет: реестр начинается пустым и наполняется
+   только отчётами игроков (localStorage или серверный API).
    ══════════════════════════════════════════════════════════════ */
 (function (global) {
   "use strict";
@@ -18,63 +20,63 @@
 
   /* ── Причины смерти ───────────────────────────────────────── */
   const CAUSES = [
-    { key: "boss",     label: "Механика босса",        color: "#d3402f", weight: 21 },
-    { key: "oneshot",  label: "Ваншот",                color: "#e2662f", weight: 15 },
-    { key: "chaos",    label: "Хаос-урон",             color: "#a05ad0", weight: 12 },
-    { key: "swarm",    label: "Толпа монстров",        color: "#c9a761", weight: 12 },
-    { key: "ground",   label: "Наземный эффект",       color: "#b3872f", weight: 10 },
-    { key: "bleed",    label: "Кровотечение",          color: "#9d2b26", weight: 8 },
-    { key: "ignite",   label: "Поджог",                color: "#d97a3a", weight: 7 },
-    { key: "offscr",   label: "Снаряд вне экрана",     color: "#7f9ec4", weight: 6 },
-    { key: "freeze",   label: "Заморозка / шок",       color: "#5fa8c9", weight: 4 },
-    { key: "poison",   label: "Яд",                    color: "#6c9a4e", weight: 3 },
-    { key: "trap",     label: "Ловушка",               color: "#8b7f6b", weight: 2 }
+    { key: "boss",     label: "Механика босса",        color: "#d3402f" },
+    { key: "oneshot",  label: "Ваншот",                color: "#e2662f" },
+    { key: "chaos",    label: "Хаос-урон",             color: "#a05ad0" },
+    { key: "swarm",    label: "Толпа монстров",        color: "#c9a761" },
+    { key: "ground",   label: "Наземный эффект",       color: "#b3872f" },
+    { key: "bleed",    label: "Кровотечение",          color: "#9d2b26" },
+    { key: "ignite",   label: "Поджог",                color: "#d97a3a" },
+    { key: "offscr",   label: "Снаряд вне экрана",     color: "#7f9ec4" },
+    { key: "freeze",   label: "Заморозка / шок",       color: "#5fa8c9" },
+    { key: "poison",   label: "Яд",                    color: "#6c9a4e" },
+    { key: "trap",     label: "Ловушка",               color: "#8b7f6b" }
   ];
 
   /* ── Локации ──────────────────────────────────────────────── */
   const AREAS = [
     // Акт 1
-    { area: "Clearfell",                 act: "Акт I",   weight: 42 },
-    { area: "The Grelwood",              act: "Акт I",   weight: 34 },
-    { area: "The Red Vale",              act: "Акт I",   weight: 26 },
-    { area: "Grim Tangle",               act: "Акт I",   weight: 30 },
-    { area: "Cemetery of the Eternals",  act: "Акт I",   weight: 33 },
-    { area: "Ogham Farmlands",           act: "Акт I",   weight: 38 },
-    { area: "Ogham Village",             act: "Акт I",   weight: 36 },
-    { area: "The Manor Ramparts",        act: "Акт I",   weight: 29 },
-    { area: "Ogham Manor",               act: "Акт I",   weight: 44 },
+    { area: "Clearfell",                 act: "Акт I" },
+    { area: "The Grelwood",              act: "Акт I" },
+    { area: "The Red Vale",              act: "Акт I" },
+    { area: "Grim Tangle",               act: "Акт I" },
+    { area: "Cemetery of the Eternals",  act: "Акт I" },
+    { area: "Ogham Farmlands",           act: "Акт I" },
+    { area: "Ogham Village",             act: "Акт I" },
+    { area: "The Manor Ramparts",        act: "Акт I" },
+    { area: "Ogham Manor",               act: "Акт I" },
     // Акт 2
-    { area: "Vastiri Outskirts",         act: "Акт II",  weight: 40 },
-    { area: "The Halani Gates",          act: "Акт II",  weight: 31 },
-    { area: "The Mastodon Badlands",     act: "Акт II",  weight: 28 },
-    { area: "The Bone Pits",             act: "Акт II",  weight: 35 },
-    { area: "The Spires of Deshar",      act: "Акт II",  weight: 32 },
-    { area: "The Lost City",             act: "Акт II",  weight: 39 },
-    { area: "Trial of the Sekhemas",     act: "Акт II",  weight: 58 },
-    { area: "Valley of the Titans",      act: "Акт II",  weight: 30 },
-    { area: "The Titan Grotto",          act: "Акт II",  weight: 46 },
-    { area: "The Dreadnought",           act: "Акт II",  weight: 52 },
+    { area: "Vastiri Outskirts",         act: "Акт II" },
+    { area: "The Halani Gates",          act: "Акт II" },
+    { area: "The Mastodon Badlands",     act: "Акт II" },
+    { area: "The Bone Pits",             act: "Акт II" },
+    { area: "The Spires of Deshar",      act: "Акт II" },
+    { area: "The Lost City",             act: "Акт II" },
+    { area: "Trial of the Sekhemas",     act: "Акт II" },
+    { area: "Valley of the Titans",      act: "Акт II" },
+    { area: "The Titan Grotto",          act: "Акт II" },
+    { area: "The Dreadnought",           act: "Акт II" },
     // Акт 3
-    { area: "Sandswept Marsh",           act: "Акт III", weight: 37 },
-    { area: "Jungle Ruins",              act: "Акт III", weight: 33 },
-    { area: "Infested Barrens",          act: "Акт III", weight: 31 },
-    { area: "The Azak Bog",              act: "Акт III", weight: 45 },
-    { area: "Chimeral Wetlands",         act: "Акт III", weight: 40 },
-    { area: "Jiquani's Machinarium",     act: "Акт III", weight: 43 },
-    { area: "The Venom Crypts",          act: "Акт III", weight: 48 },
-    { area: "Utzaal",                    act: "Акт III", weight: 55 },
-    { area: "The Black Chambers",        act: "Акт III", weight: 50 },
-    { area: "Aggorat",                   act: "Акт III", weight: 61 },
-    { area: "The Ziggurat",              act: "Акт III", weight: 57 },
+    { area: "Sandswept Marsh",           act: "Акт III" },
+    { area: "Jungle Ruins",              act: "Акт III" },
+    { area: "Infested Barrens",          act: "Акт III" },
+    { area: "The Azak Bog",              act: "Акт III" },
+    { area: "Chimeral Wetlands",         act: "Акт III" },
+    { area: "Jiquani's Machinarium",     act: "Акт III" },
+    { area: "The Venom Crypts",          act: "Акт III" },
+    { area: "Utzaal",                    act: "Акт III" },
+    { area: "The Black Chambers",        act: "Акт III" },
+    { area: "Aggorat",                   act: "Акт III" },
+    { area: "The Ziggurat",              act: "Акт III" },
     // Эндгейм
-    { area: "The Burning Monolith",      act: "Эндгейм", weight: 74 },
-    { area: "Twisted Domain",            act: "Эндгейм", weight: 68 },
-    { area: "Trial of Chaos",            act: "Эндгейм", weight: 63 },
-    { area: "The Atlas — T15 Maps",      act: "Эндгейм", weight: 71 },
-    { area: "Xesht's Sanctum",           act: "Эндгейм", weight: 66 }
+    { area: "The Burning Monolith",      act: "Эндгейм" },
+    { area: "Twisted Domain",            act: "Эндгейм" },
+    { area: "Trial of Chaos",            act: "Эндгейм" },
+    { area: "The Atlas — T15 Maps",      act: "Эндгейм" },
+    { area: "Xesht's Sanctum",           act: "Эндгейм" }
   ];
 
-  /* ── Боссы и опасные твари по локациям ────────────────────── */
+  /* ── Боссы по локациям (подсказка для поля «Источник») ────── */
   const BOSS_BY_AREA = {
     "The Grelwood": ["The Devourer"],
     "Grim Tangle": ["The Rust King"],
@@ -99,144 +101,7 @@
     "Xesht's Sanctum": ["Xesht, We That Are One"]
   };
 
-  const RARE_MOBS = [
-    "Brambleghast, Thicket Tyrant", "Vorn, the Bonecarver", "Sablethorn the Unbroken",
-    "Mordreth, Warden of Rot", "Ghalvorn the Skinless", "Ithara, Widow of Ash",
-    "Skarn the Drowned", "Ulmgar, Flesh Architect", "The Pale Choir",
-    "Nyx, Hollow Matriarch", "Gravewretch", "Kethra the Emberbound"
-  ];
-
-  const DAMAGE = {
-    boss: ["Physical", "Fire", "Cold", "Chaos", "Lightning"],
-    oneshot: ["Physical", "Fire", "Chaos"],
-    chaos: ["Chaos", "Chaos", "Poison"],
-    swarm: ["Physical", "Lightning", "Cold"],
-    ground: ["Fire", "Chaos", "Lightning"],
-    bleed: ["Physical"],
-    ignite: ["Fire"],
-    offscr: ["Physical", "Cold", "Lightning"],
-    freeze: ["Cold", "Lightning"],
-    poison: ["Chaos"],
-    trap: ["Physical", "Fire"]
-  };
-
   const LEAGUES = ["Dawn of the Hunt", "Hardcore", "Standard", "SSF"];
-
-  const NAME_A = ["Kalandra", "Malachai", "Ogham", "Vastiri", "Sarn", "Oriath", "Wraeclast", "Axiom", "Doryani", "Geonor", "Utzaal", "Ralakesh", "Kitava", "Zana", "Tarkleigh", "Nessa", "Yeena", "Silk", "Azmeri", "Vaal"];
-  const NAME_B = ["sLast", "Ash", "Ember", "Vow", "Oath", "Bane", "Hollow", "Warden", "Widow", "Thorn", "Requiem", "Dirge", "Cinder", "Grave", "Pyre", "Ruin", "Frost", "Vesper", "Nocturne", "Sorrow"];
-
-  /* ── PRNG ─────────────────────────────────────────────────── */
-  function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function () {
-      a |= 0; a = (a + 0x6D2B79F5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
-  function pickWeighted(list, rand) {
-    const total = list.reduce((s, x) => s + (x.weight || 1), 0);
-    let r = rand() * total;
-    for (const item of list) {
-      r -= item.weight || 1;
-      if (r <= 0) return item;
-    }
-    return list[list.length - 1];
-  }
-
-  /* ── Генерация реестра ────────────────────────────────────── */
-  const DAY = 86400000;
-  const NOW = Date.now();
-  const SPAN_DAYS = 16;
-  const TOTAL = 2680;
-
-  function build() {
-    const rand = mulberry32(20241207);
-    const records = [];
-    const areaWeights = AREAS.map((a) => ({ ...a, weight: a.weight }));
-
-    for (let i = 0; i < TOTAL; i++) {
-      // свежие записи гуще старых: 3 волны + равномерный фон
-      let age = Math.pow(rand(), 1.7) * SPAN_DAYS * DAY;
-      if (rand() < 0.09) age = rand() * DAY * 0.6;      // «только что»
-      const ts = NOW - age;
-
-      const area = pickWeighted(areaWeights, rand);
-      const cause = pickWeighted(CAUSES, rand);
-      const klass = pickWeighted(CLASSES.map((c) => ({ ...c, weight: 1 })), rand);
-      const league = pickWeighted(
-        LEAGUES.map((l) => ({ key: l, weight: l === "Dawn of the Hunt" ? 52 : l === "Hardcore" ? 20 : l === "SSF" ? 12 : 16 })),
-        rand
-      ).key;
-
-      const hardcore = league === "Hardcore" || (league === "SSF" && rand() < 0.4);
-
-      // уровень: новички гибнут часто, но и хай-левел встречается
-      let level;
-      const roll = rand();
-      if (roll < 0.16) level = 1 + Math.floor(rand() * 24);
-      else if (roll < 0.52) level = 25 + Math.floor(rand() * 31);
-      else if (roll < 0.87) level = 56 + Math.floor(rand() * 25);
-      else level = 81 + Math.floor(rand() * 20);
-      if (area.act === "Эндгейм") level = Math.max(level, 62 + Math.floor(rand() * 30));
-      if (cause.key === "chaos") level = Math.max(level, 30);
-
-      let source;
-      if (cause.key === "boss") {
-        const bosses = BOSS_BY_AREA[area.area] || ["Rare Map Boss"];
-        source = bosses[Math.floor(rand() * bosses.length)];
-      } else if (cause.key === "swarm") {
-        source = ["Pack of Vastiri Bandits", "Vaal Spawn", "Swarm of Bog Crawlers", "Rare Pack"][Math.floor(rand() * 4)];
-      } else {
-        source = RARE_MOBS[Math.floor(rand() * RARE_MOBS.length)];
-      }
-
-      const damagePool = DAMAGE[cause.key] || ["Physical"];
-      const damage = damagePool[Math.floor(rand() * damagePool.length)];
-
-      const name = NAME_A[Math.floor(rand() * NAME_A.length)] + "_" + NAME_B[Math.floor(rand() * NAME_B.length)];
-      const ascendancy = klass.ascendancies[Math.floor(rand() * klass.ascendancies.length)];
-
-      records.push({
-        id: "d" + (100000 + i),
-        charName: name,
-        className: klass.key,
-        classColor: klass.color,
-        ascendancy,
-        level,
-        area: area.area,
-        act: area.act,
-        causeKey: cause.key,
-        cause: cause.label,
-        causeColor: cause.color,
-        source,
-        damage,
-        league,
-        hardcore,
-        timestamp: Math.round(ts),
-        community: false,
-        note: buildNote(area, cause, source, klass)
-      });
-    }
-
-    records.sort((a, b) => b.timestamp - a.timestamp);
-    return records;
-  }
-
-  const NOTE_TEMPLATES = [
-    (a, c, s, k) => `${k} вошёл в ${a.area} с полным запасом здоровья. ${s} вышел навстречу — и всё закончилось за один удар.`,
-    (a, c, s, k) => `${a.area}. ${c.label}. Последнее, что увидел ${k}, — всполох ${s} в темноте.`,
-    (a, c, s, k) => `Уровень остался позади, ${a.area} забрал своё. ${s} не оставил ни шанса.`,
-    (a, c, s, k) => `${s} в ${a.area}. ${c.label} — и экран смерти вместо карты.`,
-    (a, c, s, k) => `Портал закрылся. ${k} остался в ${a.area} навсегда. Причина: ${c.label}.`
-  ];
-
-  function buildNote(area, cause, source, klass) {
-    const t = NOTE_TEMPLATES[Math.floor(Math.random() * NOTE_TEMPLATES.length)];
-    return t(area, cause, source, klass.key);
-  }
 
   /* ── Агрегации ────────────────────────────────────────────── */
   function countBy(records, key) {
@@ -293,6 +158,7 @@
     return {
       total,
       today,
+      hcCount: hc,
       hcShare: total ? (hc / total) * 100 : 0,
       avgLevel,
       topArea: areas[0] ? { name: areas[0].key, count: areas[0].value } : null,
@@ -306,6 +172,7 @@
   }
 
   /* ── Утилиты ──────────────────────────────────────────────── */
+  const DAY = 86400000;
   const nf = new Intl.NumberFormat("ru-RU");
 
   function fmt(n) { return nf.format(Math.round(n)); }
@@ -335,7 +202,7 @@
   global.PoE = global.PoE || {};
   global.PoE.data = {
     CLASSES, CAUSES, AREAS, LEAGUES, BOSS_BY_AREA,
-    records: build(),
+    records: [],
     countBy, hourHistogram, dayHistogram, summarize,
     fmt, timeAgo, fullDate, clock,
     classMeta: (k) => CLASSES.find((c) => c.key === k),
