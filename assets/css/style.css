@@ -807,6 +807,34 @@ code {
 }
 .field input:focus-visible { box-shadow: 0 0 0 1px rgba(201, 167, 97, 0.2); }
 
+.field textarea {
+  width: 100%;
+  min-height: 84px;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  padding: 9px 11px;
+  resize: vertical;
+  transition: border-color 0.2s, background 0.2s;
+}
+.field textarea::placeholder { color: var(--muted-2); }
+.field textarea:focus {
+  outline: none;
+  border-color: rgba(201, 167, 97, 0.55);
+  background: rgba(201, 167, 97, 0.04);
+}
+
+.form__hint {
+  margin: -4px 0 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted-2);
+}
+
 .field--search { flex: 1 1 240px; }
 .field--search svg {
   position: absolute;
@@ -1007,6 +1035,69 @@ code {
   border-left: 2px solid var(--blood);
   padding-left: 10px;
 }
+.form__error[hidden] { display: none; }
+
+/* список сохранённых плейлистов в модалке */
+.playlist-saved {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.playlist-saved[hidden] { display: none; }
+.playlist-saved__title {
+  margin: 0 0 10px;
+  font-family: "Cinzel", serif;
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+.playlist-saved__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 190px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 167, 97, 0.35) transparent;
+}
+.playlist-saved__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.015);
+}
+.playlist-saved__meta { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.35; }
+.playlist-saved__meta b {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.playlist-saved__meta small { font-size: 9.5px; color: var(--muted-2); }
+.playlist-saved__item .btn { padding: 4px 9px; font-size: 8.5px; }
+.playlist-saved__del {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--muted-2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.playlist-saved__del:hover { color: var(--blood-bright); border-color: rgba(201, 167, 97, 0.25); }
 
 /* ─────────────────────────────── about */
 
@@ -1150,8 +1241,9 @@ code {
 }
 .player__list-head {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   padding-bottom: 5px;
   font-family: "Cinzel", serif;
   font-size: 8.5px;
@@ -1162,6 +1254,55 @@ code {
   margin-bottom: 4px;
 }
 .player__list-count { color: var(--gold-dim); letter-spacing: 0.08em; }
+.player__list-label { flex: 0 0 auto; white-space: nowrap; }
+
+/* выбор источника: штатный плейлист или свой */
+.player__source {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 160px;
+  font-family: "Inter", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--text);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  padding: 3px 20px 3px 6px;
+  cursor: pointer;
+  appearance: none;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23c9a761' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.player__source option { background: #12100c; color: var(--text); }
+.player__source:hover { border-color: rgba(201, 167, 97, 0.45); }
+.player__source:focus-visible { outline: none; border-color: rgba(201, 167, 97, 0.55); }
+
+.player__add {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  color: var(--gold-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.player__add svg { width: 11px; height: 11px; }
+.player__add:hover,
+.player__add:focus-visible {
+  color: var(--gold-bright);
+  border-color: rgba(201, 167, 97, 0.5);
+  background: rgba(201, 167, 97, 0.08);
+  outline: none;
+}
 
 .tracklist {
   list-style: none;
@@ -1219,6 +1360,27 @@ code {
   text-overflow: ellipsis;
 }
 .tracklist__dur { font-size: 9.5px; color: var(--muted-2); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+
+/* карточка «плейлист целиком» — треки листает сам Spotify */
+.tracklist__item--static { cursor: default; align-items: flex-start; }
+.tracklist__item--static:hover { background: transparent; }
+.tracklist__open {
+  flex: 0 0 auto;
+  padding: 0 2px;
+  color: var(--gold-dim);
+  font-size: 12px;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.tracklist__open:hover { color: var(--gold-bright); }
+
+.player__list-hint {
+  margin: 6px 0 0;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: var(--muted-2);
+}
 
 .player__spotify {
   display: inline-flex;
@@ -1332,6 +1494,30 @@ code {
 .player__vol-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .player__vol-value { font-size: 10px; color: var(--muted-2); width: 32px; font-variant-numeric: tabular-nums; }
 .player__playlists { display: flex; gap: 5px; margin-left: auto; flex-wrap: wrap; }
+
+/* кнопка «свой плейлист»: видна там, где список треков скрыт */
+.player__addplayer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: none;
+  font-family: "Cinzel", serif;
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.player__addplayer:hover { color: var(--gold); border-color: var(--line); background: rgba(201, 167, 97, 0.05); }
+
+@media (min-width: 1181px) {
+  .player__playlists { display: none; }
+}
 
 /* если Spotify Embed не отдаёт setVolume() — громкость живёт внутри iframe */
 .player.no-volume .range--vol { opacity: 0.35; pointer-events: none; }

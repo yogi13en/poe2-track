@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261031083427">
+<link rel="stylesheet" href="assets/css/style.css?v=20261031085143">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0a08'/%3E%3Cpath d='M16 3l9 7v12l-9 7-9-7V10z' fill='none' stroke='%23c9a761' stroke-width='1.4'/%3E%3Cpath d='M16 9v14M11 16h10' stroke='%238c1f1f' stroke-width='2'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -457,6 +457,9 @@
         </button>
         <input type="range" class="range range--vol" id="sp-volume" min="0" max="100" value="70" step="1" aria-label="Громкость">
         <span class="player__vol-value" id="sp-volume-value">70%</span>
+        <div class="player__playlists">
+          <button class="player__addplayer" id="sp-add-playlist-alt" type="button" title="Добавить свой плейлист">＋ Плейлист</button>
+        </div>
         <a class="player__spotify" href="https://open.spotify.com/playlist/0UZu4UhZuDmGysBa8PhnlL" target="_blank" rel="noopener" title="Открыть плейлист в Spotify">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.3"></circle><path d="M7.5 10.2c3-.9 6.4-.5 9 1M8 13.2c2.4-.7 5.1-.4 7.2.8M8.5 16c1.9-.5 4-.3 5.7.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
           <span>Spotify</span>
@@ -466,10 +469,14 @@
 
     <div class="player__list-wrap">
       <div class="player__list-head">
-        <span>Плейлист</span>
-        <span class="player__list-count" id="sp-list-count">—</span>
+        <span class="player__list-label">Плейлист</span>
+        <select class="player__source" id="sp-source" aria-label="Выбор плейлиста"></select>
+        <button class="player__add" id="sp-add-playlist" type="button" aria-label="Добавить свой плейлист" title="Добавить свой плейлист">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+        </button>
       </div>
       <ol class="tracklist" id="sp-tracklist" aria-label="Треки плейлиста"></ol>
+      <p class="player__list-hint" id="sp-list-hint" hidden></p>
     </div>
   </div>
 </section>
@@ -533,14 +540,48 @@
   </div>
 </div>
 
+<!-- ══════════════════ PLAYLIST MODAL ══════════════════ -->
+<div class="modal" id="playlist-modal" hidden>
+  <div class="modal__backdrop" data-close-modal></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="playlist-title">
+    <button class="modal__close" type="button" data-close-modal aria-label="Закрыть">✕</button>
+    <div class="modal__ornament" aria-hidden="true"></div>
+    <p class="modal__eyebrow">Музыка</p>
+    <h2 class="modal__title" id="playlist-title">Свой плейлист</h2>
+    <p class="modal__sub">Ссылка на плейлист, альбом или отдельные треки Spotify.</p>
+
+    <form class="form" id="playlist-form" novalidate>
+      <label class="field">
+        <span class="field__label">Название</span>
+        <input type="text" name="name" maxlength="40" autocomplete="off" placeholder="Например, Битвы за Акт I">
+      </label>
+
+      <label class="field">
+        <span class="field__label">Ссылки Spotify</span>
+        <textarea name="links" rows="4" spellcheck="false" placeholder="https://open.spotify.com/playlist/…&#10;или отдельные треки:&#10;Defiance Bay — Justin Bell | https://open.spotify.com/track/…"></textarea>
+      </label>
+
+      <p class="form__hint">По одной ссылке в строке. Плейлист или альбом играет целиком, но треки в нём листает сам Spotify. Отдельные треки переключаются кнопками ⏮ ⏭ и перематываются; их можно подписать как «Название — Исполнитель | ссылка».</p>
+
+      <p class="form__error" id="playlist-error" role="alert" hidden></p>
+      <button class="btn btn--gold btn--block" type="submit" id="playlist-submit">Сохранить плейлист</button>
+    </form>
+
+    <div class="playlist-saved" id="playlist-saved" hidden>
+      <p class="playlist-saved__title">Сохранённые плейлисты</p>
+      <ul class="playlist-saved__list" id="playlist-saved-list"></ul>
+    </div>
+  </div>
+</div>
+
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="assets/js/config.js?v=20261031083427"></script>
-<script src="assets/js/data.js?v=20261031083427"></script>
-<script src="assets/js/store.js?v=20261031083427"></script>
-<script src="assets/js/charts.js?v=20261031083427"></script>
-<script src="assets/js/tracks.js?v=20261031083427"></script>
-<script src="assets/js/player.js?v=20261031083427"></script>
-<script src="assets/js/app.js?v=20261031083427"></script>
+<script src="assets/js/config.js?v=20261031085143"></script>
+<script src="assets/js/data.js?v=20261031085143"></script>
+<script src="assets/js/store.js?v=20261031085143"></script>
+<script src="assets/js/charts.js?v=20261031085143"></script>
+<script src="assets/js/tracks.js?v=20261031085143"></script>
+<script src="assets/js/player.js?v=20261031085143"></script>
+<script src="assets/js/app.js?v=20261031085143"></script>
 </body>
 </html>
