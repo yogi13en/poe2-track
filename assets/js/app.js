@@ -347,7 +347,7 @@
           <span class="user-chip__avatar">${esc(initial)}</span>
           <span class="user-chip__meta">
             <span class="user-chip__name">${esc(state.user.name)}</span>
-            <span class="user-chip__mode">${S.mode === "api" ? "сервер" : "локально"}</span>
+            <span class="user-chip__mode">${S.mode === "cloud" ? "облако" : S.mode === "api" ? "сервер" : "локально"}</span>
           </span>
         </button>
         <div class="user-menu__dropdown">
@@ -686,6 +686,43 @@
     $("#updated-at").textContent = all.length ? D.timeAgo(all[0].timestamp) : "—";
   }
 
+  /* объединяем серверную выдачу с уже загруженным, не теряя записи при гонках */
+  function mergeRecords(incoming) {
+    const byId = new Map();
+    for (const r of all) byId.set(r.id, r);
+    let added = 0;
+    for (const r of incoming) {
+      if (!byId.has(r.id)) added++;
+      byId.set(r.id, r);
+    }
+    all = [...byId.values()].sort((a, b) => b.timestamp - a.timestamp);
+    return added;
+  }
+
+  async function refreshShared(options) {
+    const opts = options || {};
+    if (!S.isShared) return 0;
+    try {
+      const rows = await S.communityDeaths();
+      const added = mergeRecords(rows.map(normalizeCommunity));
+      if (added) {
+        renderAll();
+        if (!opts.quiet) toast(added === 1 ? "В летопись добавлена новая смерть." : `Новых записей: ${added}.`);
+      }
+      setSyncState(S.mode === "cloud" ? "Общая статистика" : "Записи сообщества");
+      return added;
+    } catch (e) {
+      console.warn("Не удалось обновить общую статистику", e);
+      setSyncState("Нет связи с сервером");
+      return 0;
+    }
+  }
+
+  function setSyncState(text) {
+    const node = $("#sync-state");
+    if (node) node.textContent = text;
+  }
+
   /* ── запуск ──────────────────────────────────────────────── */
   async function init() {
     fillFormSelects();
@@ -693,23 +730,41 @@
     renderCharts();
     renderLedger();
 
+    setSyncState(S.isShared ? "Общая статистика" : "Только ваши записи");
+
     await S.init();
     state.user = S.user();
     renderAuthSlot();
 
     try {
       const community = await S.communityDeaths();
-      if (community.length) {
-        all = community.map(normalizeCommunity).sort((a, b) => b.timestamp - a.timestamp);
-      }
+      mergeRecords(community.map(normalizeCommunity));
     } catch (e) {
       console.warn("Не удалось загрузить записи сообщества", e);
+      setSyncState("Нет связи с сервером");
     }
 
     renderAll();
 
     // раз в минуту освежаем относительное время («5 мин назад»)
     setInterval(syncUpdatedAt, 60000);
+
+    // записи, добавленные до подключения облака, переносим один раз
+    if (S.mode === "cloud" && state.user) {
+      const moved = await S.migrateLocalDeaths();
+      if (moved) {
+        toast(`Ваши записи перенесены в общую летопись: ${moved}.`, "ok");
+        await refreshShared({ quiet: true });
+      }
+    }
+
+    // общие записи подтягиваем сами: статистика одна для всех посетителей
+    if (S.isShared) {
+      setInterval(() => { if (!document.hidden) refreshShared(); }, 30000);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refreshShared({ quiet: true });
+      });
+    }
   }
 
   function normalizeCommunity(r) {

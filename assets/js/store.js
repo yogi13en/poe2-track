@@ -1,11 +1,11 @@
 /* ══════════════════════════════════════════════════════════════
    store.js — аккаунты, сессия и запись смертей.
 
-   Работает в двух режимах:
-   · local  — данные в localStorage браузера (по умолчанию);
-   · api    — реальный сервер (server.py): задайте
-              window.POE2_CONFIG = { apiBase: "https://ваш-сервер/api" }
-              в assets/js/config.js ПЕРЕД подключением этого файла.
+   Работает в трёх режимах:
+   · local  — всё в localStorage браузера (по умолчанию);
+   · cloud  — общая статистика на Supabase: записи видят все,
+              аккаунты остаются локальными (см. assets/js/config.js);
+   · api    — свой сервер (server.py): window.POE2_CONFIG.apiBase.
    ══════════════════════════════════════════════════════════════ */
 (function (global) {
   "use strict";
@@ -18,7 +18,13 @@
 
   const cfg = global.POE2_CONFIG || {};
   const API = (cfg.apiBase || "").replace(/\/$/, "");
-  const MODE = API ? "api" : "local";
+  const SB = cfg.supabase && cfg.supabase.url ? {
+    url: cfg.supabase.url.replace(/\/$/, ""),
+    key: cfg.supabase.anonKey || ""
+  } : null;
+  const MODE = SB ? "cloud" : API ? "api" : "local";
+  // в облаке аккаунты по-прежнему локальные: общими должны быть смерти, а не пароли
+  const LOCAL_AUTH = MODE !== "api";
   const listeners = new Set();
   let user = null;
 
@@ -98,6 +104,71 @@
     return payload;
   }
 
+  /* ── Supabase (общая статистика) ─────────────────────────── */
+  async function sb(path, options) {
+    const opts = Object.assign({ headers: {} }, options || {});
+    opts.headers["apikey"] = SB.key;
+    opts.headers["Authorization"] = "Bearer " + SB.key;
+    opts.headers["Content-Type"] = "application/json";
+    opts.headers["Accept"] = "application/json";
+
+    const res = await fetch(SB.url + path, opts);
+    const text = await res.text();
+    let payload = null;
+    try { payload = text ? JSON.parse(text) : null; } catch (e) { payload = null; }
+    if (!res.ok) {
+      const msg = payload && (payload.message || payload.hint || payload.error_description);
+      throw new Error(msg || "Supabase ответил " + res.status);
+    }
+    return payload;
+  }
+
+  const SB_COLUMNS = "id,char_name,class_name,ascendancy,level,area,act,cause_key,cause,source," +
+    "damage,league,hardcore,note,author,author_id,created_at";
+
+  function rowToRecord(r) {
+    return {
+      id: r.id,
+      charName: r.char_name,
+      className: r.class_name,
+      ascendancy: r.ascendancy || "",
+      level: r.level,
+      area: r.area,
+      act: r.act,
+      causeKey: r.cause_key,
+      cause: r.cause,
+      source: r.source || "",
+      damage: r.damage || "—",
+      league: r.league,
+      hardcore: !!r.hardcore,
+      timestamp: new Date(r.created_at).getTime(),
+      community: true,
+      author: r.author || "",
+      authorId: r.author_id || "",
+      note: r.note || ""
+    };
+  }
+
+  function recordToRow(rec) {
+    return {
+      char_name: String(rec.charName || "").slice(0, 32),
+      class_name: rec.className,
+      ascendancy: rec.ascendancy || null,
+      level: Math.max(1, Math.min(100, Number(rec.level) || 1)),
+      area: rec.area,
+      act: rec.act,
+      cause_key: rec.causeKey,
+      cause: rec.cause,
+      source: (rec.source || "").slice(0, 48),
+      damage: rec.damage || null,
+      league: rec.league,
+      hardcore: !!rec.hardcore,
+      note: (rec.note || "").slice(0, 500),
+      author: (user && user.name) || null,
+      author_id: (user && user.id) || null
+    };
+  }
+
   /* ── локальный бэкенд ────────────────────────────────────── */
   function localUsers() { return readJSON(K.users, []); }
 
@@ -154,8 +225,11 @@
   function localDeaths() { return readJSON(K.deaths, []); }
 
   /* ── публичный API ───────────────────────────────────────── */
+  let shared = [];   // последняя загруженная порция общих записей (облако/сервер)
+
   const store = {
     mode: MODE,
+    isShared: MODE !== "local",
 
     async init() {
       if (MODE === "api") {
@@ -188,7 +262,7 @@
     },
 
     async register({ email, password, name }) {
-      if (MODE === "api") {
+      if (!LOCAL_AUTH) {
         const res = await api("/register", {
           method: "POST",
           body: JSON.stringify({ email, password, name })
@@ -202,7 +276,7 @@
     },
 
     async login({ email, password }) {
-      if (MODE === "api") {
+      if (!LOCAL_AUTH) {
         const res = await api("/login", {
           method: "POST",
           body: JSON.stringify({ email, password })
@@ -224,25 +298,46 @@
       emit();
     },
 
-    /** Локально добавленные записи (или записи сообщества с сервера). */
+    /** Общие записи: Supabase, server.py или localStorage. */
     async communityDeaths() {
+      if (MODE === "cloud") {
+        const rows = await sb("/rest/v1/deaths?select=" + SB_COLUMNS +
+          "&order=created_at.desc&limit=1000");
+        shared = (rows || []).map(rowToRecord);
+        return shared;
+      }
       if (MODE === "api") {
         try {
           const res = await api("/deaths?limit=500");
-          return res.deaths || [];
+          shared = res.deaths || [];
+          return shared;
         } catch (e) {
           return [];
         }
       }
-      return localDeaths().sort((a, b) => b.timestamp - a.timestamp);
+      shared = localDeaths().sort((a, b) => b.timestamp - a.timestamp);
+      return shared;
     },
 
     async addDeath(record) {
       if (!user) throw new Error("Сначала войдите в аккаунт.");
+
+      if (MODE === "cloud") {
+        const rows = await sb("/rest/v1/deaths?select=" + SB_COLUMNS, {
+          method: "POST",
+          headers: { Prefer: "return=representation" },
+          body: JSON.stringify(recordToRow(record))
+        });
+        const saved = rows && rows[0] ? rowToRecord(rows[0]) : null;
+        if (saved) shared = [saved].concat(shared.filter((r) => r.id !== saved.id));
+        return saved || Object.assign({}, record, { id: "tmp" + Date.now(), community: true });
+      }
+
       if (MODE === "api") {
         const res = await api("/deaths", { method: "POST", body: JSON.stringify(record) });
         return res.death;
       }
+
       const list = localDeaths();
       const entry = Object.assign({}, record, {
         id: "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -258,11 +353,30 @@
 
     /** Сводка по аккаунту для меню. */
     stats() {
-      const mine = localDeaths().filter((d) => user && d.authorId === user.id);
+      const source = MODE === "api" || MODE === "cloud" ? shared : localDeaths();
+      const mine = source.filter((d) => user && (d.authorId === user.id || d.author === user.name));
       return {
         submitted: mine.length,
         deepest: mine.reduce((m, d) => Math.max(m, d.level), 0)
       };
+    },
+
+    /** Однократный перенос записей, сделанных до подключения облака. */
+    async migrateLocalDeaths() {
+      if (MODE !== "cloud" || !user) return 0;
+      const pending = localDeaths();
+      if (!pending.length) return 0;
+      let moved = 0;
+      for (const rec of pending) {
+        try {
+          await this.addDeath(rec);
+          moved++;
+        } catch (e) {
+          break;
+        }
+      }
+      writeJSON(K.deaths, moved === pending.length ? [] : pending.slice(moved));
+      return moved;
     }
   };
 
